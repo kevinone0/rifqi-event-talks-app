@@ -80,10 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStats();
             renderFeed();
             
+            if (forceRefresh) {
+                showToast('Catatan rilis berhasil diperbarui!');
+            }
+            
         } catch (error) {
             console.error('Error fetching updates:', error);
             errorMessage.textContent = error.message;
             showState('error');
+            showToast('Gagal memuat catatan rilis!', 'error');
         } finally {
             refreshIcon.classList.remove('spinning');
             refreshBtn.disabled = false;
@@ -191,12 +196,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const originalText = span.textContent;
                     span.textContent = 'Copied!';
                     copyBtn.style.color = '#10b981'; // Green accent
+                    showToast('Pembaruan disalin ke clipboard!');
                     setTimeout(() => {
                         span.textContent = originalText;
                         copyBtn.style.color = '';
                     }, 2000);
                 }).catch(err => {
                     console.error('Failed to copy text: ', err);
+                    showToast('Gagal menyalin teks!', 'error');
                 });
             });
 
@@ -346,6 +353,41 @@ document.addEventListener('DOMContentLoaded', () => {
         tweetSubmitBtn.setAttribute('href', intentUrl);
     }
 
+    // Toast Notification utility
+    function showToast(message, type = 'success') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        let iconName = 'check-circle';
+        if (type === 'info') iconName = 'info';
+        if (type === 'error') iconName = 'alert-triangle';
+
+        toast.innerHTML = `
+            <i data-lucide="${iconName}" class="toast-icon"></i>
+            <span>${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        lucide.createIcons();
+
+        // Trigger animation
+        setTimeout(() => toast.classList.add('show'), 10);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     // ==========================================================================
     // EVENT LISTENERS
     // ==========================================================================
@@ -428,6 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showToast('Ekspor CSV berhasil diunduh!');
     });
 
     // Theme Toggle Switch
