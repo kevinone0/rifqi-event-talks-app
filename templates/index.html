@@ -50,7 +50,19 @@
             </div>
             
             <div class="header-actions">
+                <div class="theme-switch-wrapper">
+                    <i data-lucide="moon" class="theme-icon moon-icon"></i>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <i data-lucide="sun" class="theme-icon sun-icon"></i>
+                </div>
                 <span id="last-updated-text" class="last-updated">Updating...</span>
+                <button id="export-csv-btn" class="btn btn-secondary" title="Export to CSV">
+                    <i data-lucide="download"></i>
+                    <span>Export CSV</span>
+                </button>
                 <button id="refresh-btn" class="btn btn-secondary" title="Refresh Release Notes">
                     <i data-lucide="refresh-cw" class="icon-spin-placeholder"></i>
                     <span>Refresh</span>

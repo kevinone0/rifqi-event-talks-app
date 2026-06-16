@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const clearSearchBtn = document.getElementById('clear-search-btn');
     const filterChips = document.querySelectorAll('.chip');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const themeToggle = document.getElementById('theme-toggle');
     
     // Stats elements
     const statTotal = document.getElementById('stat-total');
@@ -153,6 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${update.html}
                 </div>
                 <div class="card-actions">
+                    <button class="copy-action-btn" title="Copy clean text to clipboard">
+                        <i data-lucide="copy"></i>
+                        <span>Copy</span>
+                    </button>
                     <button class="tweet-action-btn" title="Select and compose tweet">
                         <i data-lucide="twitter"></i>
                         <span>Select & Tweet</span>
@@ -174,6 +180,24 @@ document.addEventListener('DOMContentLoaded', () => {
             tweetBtn.addEventListener('click', (e) => {
                 e.stopPropagation(); // Avoid double toggle from card click handler
                 selectCard(update.id);
+            });
+
+            // Copy button click behavior
+            const copyBtn = card.querySelector('.copy-action-btn');
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Avoid selecting card
+                navigator.clipboard.writeText(update.text).then(() => {
+                    const span = copyBtn.querySelector('span');
+                    const originalText = span.textContent;
+                    span.textContent = 'Copied!';
+                    copyBtn.style.color = '#10b981'; // Green accent
+                    setTimeout(() => {
+                        span.textContent = originalText;
+                        copyBtn.style.color = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
             });
 
             updatesList.appendChild(card);
@@ -363,6 +387,66 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Textarea input
     tweetTextarea.addEventListener('input', updateCharCount);
+
+    // Export to CSV
+    exportCsvBtn.addEventListener('click', () => {
+        if (allUpdates.length === 0) {
+            alert('No updates to export!');
+            return;
+        }
+        
+        // Helper to escape CSV values
+        const escapeCSV = (val) => {
+            if (val === null || val === undefined) return '';
+            let str = String(val);
+            if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        };
+
+        // Build CSV content
+        let csvContent = 'ID,Date,Type,Description,Link\n';
+        allUpdates.forEach(update => {
+            const row = [
+                update.id,
+                update.date,
+                update.type,
+                update.text,
+                update.link
+            ];
+            csvContent += row.map(escapeCSV).join(',') + '\n';
+        });
+
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Theme Toggle Switch
+    themeToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.documentElement.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.remove('light-theme');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        themeToggle.checked = true;
+        document.documentElement.classList.add('light-theme');
+    }
 
     // Initial Load
     fetchUpdates();
